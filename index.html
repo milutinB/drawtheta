@@ -3,6 +3,7 @@
   <script crossorigin src="https://unpkg.com/react@16/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <script src="theta.js"></script>
     <script src="pathQuery.js"></script>
     <style>
@@ -60,20 +61,16 @@
     }
 
     class Stats extends React.Component {
-
       render() {
-
           let edges = computeThetaK(this.props.points, this.props.k);
-
           var spanningRatio = computeSpanningRatio(this.props.points, edges);
-
-
+          let horizontalLine = e('hr', {style: {borderBottomColor: 'black', borderBottomWidth: 1}}, null);
+          let instructions = e('div', null, 'If neither place nor delete is selected, vertices can be dragged to a new position. Click once to select a vertex and click a second time to leave it at a new position.')
 
         return(
-            e('div', null, "Spanning Ratio: " + spanningRatio)
+            e('div', null, "Spanning Ratio: " + spanningRatio, horizontalLine, instructions)
           );
       }
-
     }
 
     class Controls extends React.Component {
@@ -171,7 +168,6 @@
       }
 
       drawPoints() {
-
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const points = this.state.points;
@@ -180,7 +176,6 @@
 
         for (var j = 0; j < points.length; j++)
           points[j].draw(ctx, this.state.k);
-
       }
 
       drawEdges() {
