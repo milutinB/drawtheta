@@ -1,0 +1,409 @@
+<html>
+<head>
+  <script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="theta.js"></script>
+    <script src="pathQuery.js"></script>
+    <style>
+    canvas {
+      border: solid black 2px;
+    }
+    </style>
+  </head>
+
+<body>
+  <script>
+
+    const e = React.createElement;
+
+    /*class Vertex {
+
+      static radius() {
+        return 15;
+      }
+
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.radius = 7;
+      }
+
+      distance(otherVertex) {
+        return Math.sqrt(
+            Math.pow(this.x - otherVertex.x, 2) +
+            Math.pow(this.y - otherVertex.y, 2)
+          )
+      }
+
+      draw(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, Vertex.radius(), 0, 2*Math.PI);
+        ctx.stroke();
+        ctx.fill();
+      }
+
+    }*/
+
+    class Edge {
+      constructor(v, w) {
+        this.v = v;
+        this.w = w;
+      }
+
+      draw(ctx) {
+        ctx.beginPath();
+        ctx.moveTo(this.v.x, this.v.y);
+        ctx.lineTo(this.w.x, this.w.y);
+        ctx.stroke();
+      }
+    }
+
+    class Stats extends React.Component {
+
+      render() {
+
+          let edges = computeThetaK(this.props.points, this.props.k);
+
+          var spanningRatio = computeSpanningRatio(this.props.points, edges);
+
+
+
+        return(
+            e('div', null, "Spanning Ratio: " + spanningRatio)
+          );
+      }
+
+    }
+
+    class Controls extends React.Component {
+
+        constructor(props) {
+          super(props);
+        }
+
+        render() {
+          var placeColor = '#000000';
+          var deleteColor = '#000000';
+
+          if (this.props.mouseState == 'place') {
+            placeColor = '#2CE81B';
+          } else if (this.props.mouseState == 'delete') {
+            deleteColor = '#2CE81B';
+          }
+
+
+
+          let placeButton = e('button', {onClick: this.props.togglePlace, style: {color: placeColor}}, 'Place Vertex');
+          let deleteButton = e('button', {onClick: this.props.toggleDelete, style: {color: deleteColor}}, 'Delete Vertex');
+
+          var possibleValues= [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+
+          possibleValues = possibleValues.map((value, i) => {
+            return (
+              e('option', {value: value}, value)
+            )
+          })
+          let kSelector = e('select', {onChange: this.props.changeK}, possibleValues);
+          let numberOfConesContainer = e('div', null, 'Number of cones: ', kSelector);
+          return(
+            e('div', null,
+              placeButton, deleteButton, numberOfConesContainer
+           )
+          )
+          //return(e('button', {onClick: this.props.toggle}, 'Place Vertices'))
+        }
+    }
+
+    class CanvasContainer extends React.Component {
+
+      constructor(props) {
+
+        super(props);
+
+        this.handleClick = this.handleClick.bind(this);
+        this.handleMouseMove = this.handleMouseMove.bind(this);
+        this.toggleState = this.toggleState.bind(this);
+        this.drawPoints = this.drawPoints.bind(this);
+        this.findPoint = this.findPoint.bind(this);
+        this.togglePlace = this.togglePlace.bind(this);
+        this.toggleDelete = this.toggleDelete.bind(this);
+        this.toggleMouse = this.toggleMouse.bind(this);
+        this.changeK = this.changeK.bind(this);
+
+        this.state = {
+          mousePos: {x: 0,y: 0},
+          mouseState: 'drag',
+          mousePressed: true,
+          points: [],
+          dragIndex: -1,
+          k: 2,
+          spanningRatio: 0
+        };
+      }
+
+      componentDidMount() {
+
+      }
+
+      findPoint() {
+        let x = this.state.mousePos.x;
+        let y = this.state.mousePos.y;
+        var index = 0;
+        var points = this.state.points;
+        var mouse = new Vertex(x, y);
+
+        for (var j = 0; j < points.length; j++) {
+          var currentPoint = points[index];
+          var newPoint = points[j];
+          //console.log(newPoint.distance(mouse));
+          if (newPoint.distance(mouse) < currentPoint.distance(mouse)) {
+            index = j;
+          }
+        }
+
+        var finalPoint = points[index];
+        if (typeof finalPoint != 'undefined') {
+          if (finalPoint.distance(mouse) < 2 * Vertex.radius())
+            return index;
+        }
+        return -1;
+      }
+
+      drawPoints() {
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const points = this.state.points;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (var j = 0; j < points.length; j++)
+          points[j].draw(ctx, this.state.k);
+
+      }
+
+      drawEdges() {
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let edges = computeThetaK(this.state.points, this.state.k);
+        //console.log(edges);
+        //console.log(this.state.points);
+        for (var i = 0; i < edges.length; i++) {
+          for (var j = 0; j < edges[i].length; j++) {
+            (new Edge(this.state.points[i], this.state.points[edges[i][j]])).draw(ctx);
+          }
+        }
+
+        /*for (var i = 0; i < this.state.points.length; i ++) {
+          for (var j = i + 1; j < this.state.points.length; j++) {
+            var v = this.state.points[i];
+            var w = this.state.points[j];
+            (new Edge(v, w)).draw(ctx);
+          }
+        }*/
+      }
+
+      componentDidUpdate() {
+        this.drawPoints();
+        this.drawEdges();
+      }
+
+      changeK(event) {
+        this.setState({
+          mousePos: this.state.mousePos,
+          mouseState: this.state.mouseState,
+          mousePressed: this.state.mousePressed,
+          points: this.state.points,
+          dragIndex: this.state.dragIndex,
+          k: event.target.value
+        });
+      }
+
+      toggleState(type) {
+        var newState = '';
+        if (this.state.mouseState == type) {
+          newState = 'drag';
+        } else {
+          newState = type;
+        }
+        this.setState({
+          mousePos: this.state.mousePos,
+          mouseState: newState,
+          mousePressed: this.state.mousePressed,
+          points: this.state.points,
+          dragIndex: this.state.dragIndex,
+          k: this.state.k
+        })
+      }
+        togglePlace() {
+          this.toggleState('place');
+        }
+        toggleDelete() {
+          this.toggleState('delete');
+        }
+
+
+      handleClick() {
+        if (this.state.mouseState == 'place') {
+          var newPoints = this.state.points;
+          newPoints.push(new Vertex(this.state.mousePos.x, this.state.mousePos.y));
+          this.setState({
+            mousePos: this.state.mousePos,
+            mouseState: this.state.mouseState,
+            mousePressed: false,
+            points: newPoints,
+            dragIndex: this.state.dragIndex,
+            k: this.state.k
+          });
+
+       } else if (this.state.mouseState == 'delete') {
+            let index = this.findPoint();
+
+            if (index > -1) {
+              var newPoints = this.state.points;
+              newPoints.splice(index, 1);
+              this.setState({
+                mousePos: this.mousePos,
+                mouseState: this.state.mouseState,
+                mousePressed: false,
+                points: newPoints,
+                dragIndex: this.state.dragIndex,
+                k: this.state.k
+              });
+            }
+
+       } else if (this.state.mouseState == 'drag') {
+         //console.log("TEST"); console.log(this.state.mousePressed);
+         if (!this.state.mousePressed) {
+           var index = this.findPoint();
+           if (index > -1) {
+             this.setState({
+               mousePos: this.state.mousePos,
+               mouseState: this.state.mouseState,
+               mousePressed: true,
+               points: this.state.points,
+               dragIndex: index,
+               k: this.state.k
+             });
+           }
+         } else {
+           this.setState({
+             mousePos: this.state.mousePos,
+             mouseState: this.state.mouseState,
+             mousePressed: false,
+             points: this.state.points,
+             dragIndex: -1,
+             k: this.state.k
+           });
+         }
+         //console.log("TEST 2"); console.log(this.state.mousePressed);
+       }
+      }
+
+      toggleMouse() {
+        //console.log(this.state.mousePressed);
+        /*this.setState({
+          mousePos: this.state.mousePos,
+          mouseState: this.state.mouseState,
+          mousePressed: !this.state.mousePressed,
+          points: this.state.points,
+          dragIndex: -1
+        });
+
+        if (this.state.mousePressed) {
+          var index = this.findPoint();
+          //console.log(index);
+          if (index > -1) {
+            this.setState({
+              mousePos: this.state.mousePos,
+              mouseState: this.state.mouseState,
+              mousePressed: this.state.mousePressed,
+              points: this.state.points,
+              dragIndex: index
+            });
+          }
+        }
+        if (!this.state.mousePressed) {
+          alert('mouse released');
+        }*/
+        //alert(this.state.mousePressed);
+      }
+
+
+      handleMouseMove(e) {
+        //console.log(e.clientX);
+        //console.log(this.state.mousePos);
+
+
+         if (this.state.mousePressed && this.state.dragIndex > -1 && this.state.mouseState == 'drag') {
+           var newPoints = this.state.points;
+           var dragIndex = this.state.dragIndex;
+           //console.log(this.state.mousePos);
+           newPoints[dragIndex].x = e.clientX;
+           newPoints[dragIndex].y = e.clientY;
+           //console.log(this.state.points);
+           //console.log(newPoints[dragIndex]);
+           this.setState({
+             mousePos: {x: e.clientX, y: e.clientY},
+             mouseState: this.state.mouseState,
+             mousePressed: this.state.mousePressed,
+             points: newPoints,
+             dragIndex: this.state.dragIndex,
+             k: this.state.k
+           });
+         } else  {
+           this.setState({
+             mousePos: {x: e.clientX, y: e.clientY},
+             mouseState: this.state.mouseState,
+             mousePressed: this.state.mousePressed,
+             points: this.state.points,
+             dragIndex: this.state.dragIndex,
+             k: this.state.k
+           });
+        }
+
+        //console.log(this.state.mousePos);
+        //console.log(this.state.mousePos);
+        //console.log("move point: " + this.state.mousePressed && this.state.dragIndex > -1 && this.state.mouseState == 'drag');
+        //console.log("mousePressed: "); console.log(this.state.mousePressed);
+        //console.log("dragIndex: "); conole.log(this.state.dragIndex);
+        //console.log("thisistate.mouseState: "); console.log(this.state.mouseState);
+
+      }
+
+      render() {
+        let c = e('canvas',
+                   {
+                       id: 'canvas', width: 800, height: 400,
+                       onClick: this.handleClick,
+                       onMouseMove: this.handleMouseMove,
+                       onMouseDown: this.toggleMouse,
+                       onMouseUp: this.toggleMouse
+                   },
+           null)
+
+        return(
+        e('div', null, c,
+        e(Controls, {togglePlace: this.togglePlace, toggleDelete: this.toggleDelete, mouseState: this.state.mouseState, changeK: this.changeK}, null),
+        e(Stats, {points: this.state.points, k: this.state.k}, null)
+      ))
+      }
+    }
+
+    class App extends React.Component {
+      render() {
+        return(e(CanvasContainer, null, null))
+      }
+    }
+
+    $(document).ready(() => {
+      ReactDOM.render(
+        e(App, null, null),
+        document.getElementById('root')
+      );
+    })
+  </script>
+  <div id="root"></div>
+</body>
+</html>
