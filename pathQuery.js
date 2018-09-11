@@ -79,7 +79,10 @@ function naiveDijkstra(graph, points, source) {
       }
     }
   }
-  return dist;
+  return {
+      dist: dist,
+      prev: prev
+    };
 }
 
 
@@ -103,17 +106,25 @@ function computeAllShortestPaths(points, edges) {
 
   var graph = getGraph(points, edges);
   var distanceLists = [];
+  var prevLists = [];
+  for (var i = 0; i < points.length; i++) {
+    var output = naiveDijkstra(graph, points, i);
+    distanceLists.push(output.dist);
+    prevLists.push(output.prev);
+  }
 
-  for (var i = 0; i < points.length; i++)
-    distanceLists.push(naiveDijkstra(graph, points, i));
-
-  return distanceLists;
+  return {
+    distanceLists: distanceLists,
+    prevLists: prevLists
+  };
 
 }
 
 function computeAllRatios(points, edges) {
-  var distanceLists = computeAllShortestPaths(points, edges);
-  var returnList = [];
+  var output = computeAllShortestPaths(points, edges);
+  var distanceLists = output.distanceLists;
+  var prevLists = output.prevLists;
+  var ratios = [];
   for (var i = 0; i < points.length; i++) {
     var list = distanceLists[i];
     for (var j = 0; j < list.length; j++) {
@@ -122,25 +133,70 @@ function computeAllRatios(points, edges) {
         list[j] = list[j] / euclid;
       }
     }
-    returnList.push(list);
+    ratios.push(list);
   }
-  return returnList;
+  return {
+    ratios: ratios,
+    prevLists: prevLists
+  };
 }
 
 
 function computeSpanningRatio(points, edges) {
-  var ratioLists = computeAllRatios(points, edges);
+  var output = computeAllRatios(points, edges);
+  var ratioLists = output.ratios;
+  var prevLists = output.prevLists;
   var maxRatio = 0 ;
+  var maxIndexPair = {u: -1, v: -1};
   for (var i = 0; i < ratioLists.length; i++) {
     var ratioList = ratioLists[i];
     for (var j = 0; j < ratioList.length; j++) {
       var ratio = ratioList[j];
       if (ratio > maxRatio) {
         maxRatio = ratio;
+        maxIndexPair.u = i;
+        maxIndexPair.v = j;
       }
     }
   }
-  return maxRatio;
+
+  //Determine the longest-shortest parth
+  var path = [maxIndexPair.u];
+  if (maxIndexPair.u != -1) {
+    var list = prevLists[maxIndexPair.v];
+    var prev = list[maxIndexPair.u];
+    path.push(prev);
+    while(prev != maxIndexPair.v) {
+      prev = list[prev];
+      path.push(prev);
+    }
+ }
+
+
+  return {
+    maxRatio: maxRatio,
+    path: path
+  };
+}
+
+function highlightPath(points, path, ctx) {
+  if (path.length > 1) {
+    //console.log(path);
+    for (var i = 1; i < path.length; i++) {
+      //console.log(path[i]);
+      var u = points[path[i - 1]];
+      var v = points[path[i]];
+      //console.log([u, v]);
+      ctx.beginPath();
+      ctx.moveTo(u.x, u.y);
+      ctx.lineTo(v.x, v.y);
+      ctx.strokeStyle = '#ff0000';
+      ctx.lineWidth = 5;
+      ctx.stroke();
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 1;
+    }
+  }
 }
 
 /*

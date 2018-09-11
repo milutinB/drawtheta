@@ -3,7 +3,6 @@
   <script crossorigin src="https://unpkg.com/react@16/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <script src="theta.js"></script>
     <script src="pathQuery.js"></script>
     <style>
@@ -63,7 +62,10 @@
     class Stats extends React.Component {
       render() {
           let edges = computeThetaK(this.props.points, this.props.k);
-          var spanningRatio = computeSpanningRatio(this.props.points, edges);
+          var spanningRatioData = computeSpanningRatio(this.props.points, edges);
+          var spanningRatio = spanningRatioData.maxRatio;
+          //var path = spanningRatioData.path;
+          //this.props.drawPathInRed(path);
           let horizontalLine = e('hr', {style: {borderBottomColor: 'black', borderBottomWidth: 1}}, null);
           let instructions = e('div', null, 'If neither place nor delete is selected, vertices can be dragged to a new position. Click once to select a vertex and click a second time to leave it at a new position.')
 
@@ -127,6 +129,7 @@
         this.toggleDelete = this.toggleDelete.bind(this);
         this.toggleMouse = this.toggleMouse.bind(this);
         this.changeK = this.changeK.bind(this);
+        this.drawPathInRed = this.drawPathInRed.bind(this);
 
         this.state = {
           mousePos: {x: 0,y: 0},
@@ -190,6 +193,9 @@
           }
         }
 
+        var path = computeSpanningRatio(this.state.points, edges).path;
+        //console.log(path);
+        this.drawPathInRed(path);
         /*for (var i = 0; i < this.state.points.length; i ++) {
           for (var j = i + 1; j < this.state.points.length; j++) {
             var v = this.state.points[i];
@@ -197,6 +203,14 @@
             (new Edge(v, w)).draw(ctx);
           }
         }*/
+      }
+
+      drawPathInRed(path) {
+        const canvas = document.getElementById('canvas');
+        if (canvas != null) {
+          const ctx = canvas.getContext('2d');
+          highlightPath(this.state.points, path, ctx);
+        }
       }
 
       componentDidUpdate() {
