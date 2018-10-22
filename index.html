@@ -393,8 +393,8 @@
            null)
 
         return(
-        c,
-        e('div', null, e(Controls, {togglePlace: this.togglePlace, toggleDelete: this.toggleDelete, mouseState: this.state.mouseState, changeK: this.changeK}, null),
+        e('div', null, c,
+        e(Controls, {togglePlace: this.togglePlace, toggleDelete: this.toggleDelete, mouseState: this.state.mouseState, changeK: this.changeK}, null),
         e(Stats, {points: this.state.points, k: this.state.k}, null)
       ))
       }
