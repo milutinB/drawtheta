@@ -1,7 +1,7 @@
 class Vertex {
 
   static radius() {
-    return 10;
+    return 5;
   }
 
   constructor(x, y) {
