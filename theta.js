@@ -49,7 +49,7 @@ class Vertex {
       ctx.setLineDash([5, 3]);/*dashes are 5px and spaces are 3px*/
       ctx.beginPath();
       ctx.moveTo(this.x, this.y);
-      ctx.lineTo(unit.multiply(Vertex.radius() * 3).sum(this).x, unit.multiply(Vertex.radius() * 3).sum(this).y);
+      ctx.lineTo(unit.multiply(Vertex.radius() * 10).sum(this).x, unit.multiply(Vertex.radius() * 10).sum(this).y);
       ctx.stroke();
       ctx.setLineDash([]);
    }
