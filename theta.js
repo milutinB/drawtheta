@@ -7,7 +7,7 @@ class Vertex {
   constructor(x, y) {
     this.x = x;
     this.y = y;
-    this.radius = 7;
+    this.radius = 3;
   }
 
   distance(otherVertex) {
